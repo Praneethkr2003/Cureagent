@@ -11,11 +11,14 @@ import { AlertCircle } from 'lucide-react'
 import type { CaseDetail as CaseDetailType, CaseStatus } from '@/lib/types'
 
 type PageProps = {
-  params: Promise<{ session_id: string }>
+  params: { session_id: string } | Promise<{ session_id: string }>
 }
 
 export default function CaseDetailPage(props: PageProps) {
-  const params = use(props.params)
+  const params = (props.params as any)?.then
+    ? use(props.params as Promise<{ session_id: string }>)
+    : (props.params as { session_id: string })
+
   const { session_id } = params
   const router = useRouter()
   const [caseData, setCaseData] = useState<CaseDetailType | null>(null)

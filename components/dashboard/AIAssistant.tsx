@@ -18,7 +18,7 @@ export function AIAssistant() {
   const [messages, setMessages] = useState<(AIMessage & { timestamp: Date })[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const endRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Add system message when case changes
@@ -39,9 +39,7 @@ export function AIAssistant() {
 
   // Auto scroll to bottom
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,7 +138,7 @@ export function AIAssistant() {
       )}
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-4">
         <div className="flex flex-col gap-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -192,6 +190,7 @@ export function AIAssistant() {
               </div>
             </div>
           )}
+          <div ref={endRef} />
         </div>
       </ScrollArea>
 

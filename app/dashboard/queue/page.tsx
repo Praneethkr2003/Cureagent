@@ -97,11 +97,11 @@ export default function QueuePage() {
     }
   }, [fetchQueue])
 
-  // Fallback auto-refresh every 30 seconds
+  // Fallback auto-refresh every 15 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetchQueue()
-    }, 30000)
+    }, 15000)
     return () => clearInterval(interval)
   }, [fetchQueue])
 

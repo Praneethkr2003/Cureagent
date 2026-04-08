@@ -10,18 +10,23 @@ async function apiFetch<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(isNgrok ? { 'ngrok-skip-browser-warning': 'true' } : {}),
-    ...(((init.headers as Record<string, string> | undefined) ?? {}) as Record<string, string>),
+    ...(token
+      ? {
+          'Authorization': `Bearer ${token}`,
+        }
+      : {}),
+    ...(isNgrok
+      ? {
+          'ngrok-skip-browser-warning': 'true',
+        }
+      : {}),
+    ...(((init.headers as Record<string, string>) ?? {}) as Record<string, string>),
   }
-
   const res = await fetch(`${FASTAPI}${path}`, { ...init, headers })
-
   if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`${res.status}: ${body || 'Request failed'}`)
+    const body = await res.text()
+    throw new Error(`${res.status}: ${body}`)
   }
-
   return res.json() as Promise<T>
 }
 

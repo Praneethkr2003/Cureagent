@@ -82,13 +82,35 @@ export function CaseDetail({
   }, [caseData, setActiveCase, clearActiveCase])
 
   const handleDownloadReport = () => {
-    const blob = new Blob([caseData.doctor_report], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `cureagent_${caseData.session_id.slice(0, 8)}.md`
-    a.click()
-    URL.revokeObjectURL(url)
+    const reportText = caseData.doctor_report || ''
+    const safeText = reportText
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>cureagent_${caseData.session_id.slice(0, 8)}</title>
+    <style>
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; padding: 24px; }
+      h1 { font-size: 18px; margin: 0 0 16px; }
+      pre { white-space: pre-wrap; word-wrap: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>Doctor Report</h1>
+    <pre>${safeText}</pre>
+    <script>window.onload = () => { window.print(); };</script>
+  </body>
+</html>`
+
+    const w = window.open('', '_blank')
+    if (!w) return
+    w.document.open()
+    w.document.write(html)
+    w.document.close()
   }
 
   const getScoreColor = (score: number) => {

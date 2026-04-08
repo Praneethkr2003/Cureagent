@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       .from('sessions')
       .update({
         status: 'in_progress',
-        claimed_by: session.user.id
+        claimed_by: session.user.id,
       })
       .eq('session_id', session_id)
 
