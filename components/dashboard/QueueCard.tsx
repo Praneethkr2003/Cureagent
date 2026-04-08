@@ -38,7 +38,20 @@ export function QueueCard({ item }: QueueCardProps) {
         throw new Error('Not authenticated')
       }
 
-      await claimCase(session.access_token, item.session_id)
+      // Call the internal Next.js API route
+      const response = await fetch('/api/doctor/claim-case', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id: item.session_id }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to claim case')
+      }
+
       router.push(`/dashboard/cases/${item.session_id}`)
     } catch (error) {
       console.error('Failed to claim case:', error)
