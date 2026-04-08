@@ -12,11 +12,27 @@ async function getDoctorInfo(): Promise<Doctor | null> {
   if (!user) return null
 
   // Try to fetch from doctors table
-  const { data: doctor } = await supabase
+  let { data: doctor } = await supabase
     .from('doctors')
     .select('id, email, full_name, specialty')
     .eq('id', user.id)
     .single()
+
+  if (!doctor) {
+    const { data: newDoctor } = await supabase
+      .from('doctors')
+      .insert({
+        id: user.id,
+        email: user.email,
+        full_name:
+          user.user_metadata?.full_name || user.email?.split('@')[0] || 'Doctor',
+        specialty: 'General',
+      })
+      .select()
+      .single()
+
+    doctor = newDoctor
+  }
 
   if (doctor) {
     return doctor as Doctor
