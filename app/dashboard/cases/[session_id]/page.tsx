@@ -14,27 +14,48 @@ type PageProps = {
   params: Promise<{ session_id: string }>
 }
 
-export default function CaseDetailPage({ params }: PageProps) {
-  const { session_id } = use(params)
+export default function CaseDetailPage(props: PageProps) {
+  const params = use(props.params)
+  const { session_id } = params
   const router = useRouter()
   const [caseData, setCaseData] = useState<CaseDetailType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
+  const FASTAPI = process.env.NEXT_PUBLIC_FASTAPI_URL ?? 'http://127.0.0.1:8000'
+
   useEffect(() => {
     const fetchCase = async () => {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session?.access_token) {
-        setError('Not authenticated')
-        setIsLoading(false)
-        return
-      }
-
+      setIsLoading(true)
       try {
-        const data = await getCase(session.access_token, session_id)
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session?.access_token) {
+          setError('Not authenticated')
+          return
+        }
+
+        const response = await fetch(
+          `${FASTAPI}/doctor/case/${session_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'ngrok-skip-browser-warning': 'true',
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+
+        if (!response.ok) {
+          const errText = await response.text()
+          console.error('Case fetch error:', errText)
+          setError(`Error loading case: ${response.status} - ${errText}`)
+          return
+        }
+
+        const data = await response.json()
         setCaseData(data)
         setError(null)
       } catch (err) {
@@ -45,22 +66,21 @@ export default function CaseDetailPage({ params }: PageProps) {
     }
 
     fetchCase()
-  }, [session_id])
+  }, [session_id, FASTAPI])
 
   const handleStatusChange = async (newStatus: CaseStatus) => {
     if (!caseData) return
 
     setIsUpdatingStatus(true)
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session?.access_token) {
-      setError('Not authenticated')
-      setIsUpdatingStatus(false)
-      return
-    }
-
     try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setError('Not authenticated')
+        return
+      }
+
       await updateStatus(session.access_token, session_id, newStatus)
       setCaseData({ ...caseData, status: newStatus })
     } catch (err) {
@@ -93,7 +113,9 @@ export default function CaseDetailPage({ params }: PageProps) {
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <h2 className="text-xl font-semibold">Failed to load case</h2>
-        <p className="text-muted-foreground">{error || 'Case not found'}</p>
+        <div className="text-muted-foreground text-center max-w-md">
+          {error || 'Case not found'}
+        </div>
         <Button onClick={handleBack}>Go Back</Button>
       </div>
     )

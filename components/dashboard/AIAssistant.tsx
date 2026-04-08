@@ -29,9 +29,13 @@ export function AIAssistant() {
         content: `Case loaded: ${activeCase.patient_name}, ${activeCase.age}y ${activeCase.sex}, ${activeCase.top_symptoms.slice(0, 3).join(', ')}. How can I help?`,
         timestamp: new Date(),
       }
-      setMessages((prev) => [systemMessage, ...prev.filter(m => m.content !== systemMessage.content)])
+      setMessages((prev) => {
+        // Only add if not already the last message to avoid loops
+        if (prev.length > 0 && prev[0].content === systemMessage.content) return prev;
+        return [systemMessage, ...prev];
+      })
     }
-  }, [activeCase])
+  }, [activeCase?.session_id])
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -42,11 +46,12 @@ export function AIAssistant() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    const messageText = input.trim()
+    if (!messageText || isLoading) return
 
     const userMessage: AIMessage & { timestamp: Date } = {
       role: 'user',
-      content: input.trim(),
+      content: messageText,
       timestamp: new Date(),
     }
 
@@ -62,13 +67,14 @@ export function AIAssistant() {
         throw new Error('Not authenticated')
       }
 
-      const conversationHistory: AIMessage[] = [
-        ...messages.map(({ role, content }) => ({ role, content })),
-        { role: 'user', content: userMessage.content },
-      ]
+      const conversationHistory: { role: "user" | "assistant"; content: string }[] = messages.map(({ role, content }) => ({
+        role: role as "user" | "assistant",
+        content,
+      }))
 
       const response = await aiAssist(session.access_token, {
-        session_id: activeCase?.session_id,
+        session_id: activeCase?.session_id || null,
+        message: messageText,
         conversation_history: conversationHistory,
       })
 

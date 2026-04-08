@@ -60,6 +60,7 @@ export async function aiAssist(
   token: string,
   payload: {
     session_id?: string
+    message: string
     conversation_history: AIMessage[]
   }
 ): Promise<{ response: string }> {

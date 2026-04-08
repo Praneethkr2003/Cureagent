@@ -68,17 +68,14 @@ export default function QueuePage() {
     }
   }, [])
 
-  // Initial fetch
-  useEffect(() => {
-    fetchQueue()
-  }, [fetchQueue])
-
   // Realtime subscription
   useEffect(() => {
     const supabase = createClient()
     
+    fetchQueue() // initial load
+
     const channel = supabase
-      .channel('queue-updates')
+      .channel('queue-realtime')
       .on(
         'postgres_changes',
         {
@@ -86,16 +83,37 @@ export default function QueuePage() {
           schema: 'public',
           table: 'sessions',
         },
-        () => {
-          fetchQueue()
+        (payload) => {
+          console.log('Session change:', payload)
+          fetchQueue() // refetch on any change
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Realtime status:', status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [fetchQueue])
+
+  // Fallback auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchQueue()
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [fetchQueue])
+
+  // Initial load
+  useEffect(() => {
+    fetchQueue()
+  }, [])
+
+  const handleRefresh = () => {
+    if (isLoading) return
+    fetchQueue()
+  }
 
   // Filter and sort queue
   const filteredQueue = useMemo(() => {
@@ -148,11 +166,6 @@ export default function QueuePage() {
 
     return result
   }, [queue, specialtyFilter, severityFilter, debouncedSearch, doctorSpecialty])
-
-  const handleRefresh = () => {
-    setIsLoading(true)
-    fetchQueue()
-  }
 
   return (
     <div className="flex flex-col h-full">
