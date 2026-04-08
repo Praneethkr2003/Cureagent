@@ -11,39 +11,37 @@ async function getDoctorInfo(): Promise<Doctor | null> {
   
   if (!user) return null
 
-  // Try to fetch from doctors table
-  let { data: doctor } = await supabase
+  // Try to fetch existing doctor profile
+  const { data: doctor, error } = await supabase
     .from('doctors')
     .select('id, email, full_name, specialty')
     .eq('id', user.id)
     .single()
 
-  if (!doctor) {
-    const { data: newDoctor } = await supabase
-      .from('doctors')
-      .insert({
-        id: user.id,
-        email: user.email,
-        full_name:
-          user.user_metadata?.full_name || user.email?.split('@')[0] || 'Doctor',
-        specialty: 'General',
-      })
-      .select()
-      .single()
+  if (doctor) return doctor as Doctor
 
-    doctor = newDoctor
-  }
+  // Auto-create profile if not found
+  // User is guaranteed to exist in auth.users
+  // so foreign key constraint is satisfied
+  const { data: newDoctor } = await supabase
+    .from('doctors')
+    .insert({
+      id: user.id,
+      email: user.email ?? '',
+      full_name: user.user_metadata?.full_name 
+        ?? user.email?.split('@')[0] 
+        ?? 'Doctor',
+      specialty: 'General'
+    })
+    .select()
+    .single()
 
-  if (doctor) {
-    return doctor as Doctor
-  }
-
-  // Fallback to user metadata
-  return {
+  return newDoctor as Doctor ?? {
     id: user.id,
-    email: user.email || '',
-    full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Doctor',
-    specialty: (user.user_metadata?.specialty as Specialty) || 'General',
+    email: user.email ?? '',
+    full_name: user.user_metadata?.full_name 
+      ?? 'Doctor',
+    specialty: 'General' as Specialty
   }
 }
 
