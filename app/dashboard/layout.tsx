@@ -1,3 +1,4 @@
+// FORCE FRESH BUILD - 2026-04-08
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { AIAssistant } from '@/components/dashboard/AIAssistant'
