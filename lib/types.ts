@@ -20,7 +20,7 @@ export type CaseStatus =
 export type Doctor = {
   id: string
   email: string
-  name: string
+  full_name: string
   specialty: Specialty
 }
 

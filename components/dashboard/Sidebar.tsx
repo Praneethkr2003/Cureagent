@@ -50,7 +50,7 @@ export function Sidebar({ doctor }: SidebarProps) {
         {doctor && (
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium text-sidebar-foreground">
-              {doctor.name}
+              {doctor.full_name}
             </span>
             <SpecialtyBadge specialty={doctor.specialty} className="w-fit text-xs" />
           </div>

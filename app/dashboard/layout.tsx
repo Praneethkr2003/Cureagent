@@ -14,7 +14,7 @@ async function getDoctorInfo(): Promise<Doctor | null> {
   // Try to fetch from doctors table
   const { data: doctor } = await supabase
     .from('doctors')
-    .select('id, email, name, specialty')
+    .select('id, email, full_name, specialty')
     .eq('id', user.id)
     .single()
 
@@ -26,7 +26,7 @@ async function getDoctorInfo(): Promise<Doctor | null> {
   return {
     id: user.id,
     email: user.email || '',
-    name: user.user_metadata?.name || user.email?.split('@')[0] || 'Doctor',
+    full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Doctor',
     specialty: (user.user_metadata?.specialty as Specialty) || 'General',
   }
 }
